@@ -1,5 +1,6 @@
+from django.conf.urls.static import static
 from django.contrib import admin
-from books_store import views
+from books_store import views, settings
 
 from django.urls import include, path
 from rest_framework import permissions
@@ -28,3 +29,5 @@ urlpatterns = [
 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

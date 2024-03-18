@@ -24,6 +24,7 @@ class Book(models.Model):
     page_count = models.IntegerField()
     published = models.DateTimeField(null=True, blank=True)
     url = models.URLField(null=True, blank=True)
+    image = models.ImageField(null=True, blank=True)
     short_description = models.TextField(null=True, blank=True)
     long_description = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=10)

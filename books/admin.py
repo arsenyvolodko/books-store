@@ -8,3 +8,10 @@ from books.models import Author, Book, BookAuthor, BookCategory, Category, Categ
 @admin.register(CategoryHierarchy)
 class CategoryHierarchyAdmin(admin.ModelAdmin):
     form = CategoryHierarchyForm
+
+
+admin.site.register(Book)
+admin.site.register(Author)
+admin.site.register(Category)
+admin.site.register(BookCategory)
+admin.site.register(BookAuthor)
