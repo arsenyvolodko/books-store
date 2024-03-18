@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .serializers import BookSerializer
+from .serializers import BookSerializer, CategoriesAndBooks
 from .models import Book, Category
 
 # Create your views here.
@@ -31,6 +31,7 @@ def get_books_util(**kwargs):
 
 
 @swagger_auto_schema(
+    operation_description="Возвращает книги с возможностью фильтрации по категории и пагинации",
     method='get',
     manual_parameters=[
         openapi.Parameter('category', openapi.IN_QUERY, description="Категория возвращаемых книг",
@@ -39,7 +40,9 @@ def get_books_util(**kwargs):
         openapi.Parameter('page', openapi.IN_QUERY, description="Номер страницы (на странице 50 записей)",
                           type=openapi.TYPE_INTEGER,
                           required=False),
-    ]
+    ],
+    responses={200: BookSerializer(many=True),
+               404: 'Invalid page number format'}
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -61,13 +64,16 @@ def get_books(request):
 
 
 @swagger_auto_schema(
+    operation_description="Возвращает книги указанной категории, подкатегории данной категории на 1 уровень вниз, а также книги данных подкатегорий",
     method='get',
     manual_parameters=[
         openapi.Parameter('category', openapi.IN_QUERY,
                           description="Категория, книги которой возвращаются и все книги подкатегорий данной категории",
                           type=openapi.TYPE_STRING,
                           required=True),
-    ]
+    ],
+    responses={200: CategoriesAndBooks,
+               400: 'No category specified'},
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -88,6 +94,16 @@ def get_cats_and_books(request):
     return Response(res, status=status.HTTP_200_OK)
 
 
+@swagger_auto_schema(
+    operation_description="Возвращает информацию о книге по её ID",
+    method='get',
+    manual_parameters=[
+        openapi.Parameter('book_id', openapi.IN_PATH, description="ID книги", type=openapi.TYPE_INTEGER,
+                          required=True),
+    ],
+    responses={200: BookSerializer,
+               404: 'Invalid book_id'}
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_book(request, book_id: int):

@@ -41,7 +41,12 @@ def create_feedback_util(data):
 
 
 @permission_classes([IsAuthenticated])
-@swagger_auto_schema(method='post', request_body=FeedbackSerializer)
+@swagger_auto_schema(
+    operation_description='Отправка формы обратной связи',
+    method='post',
+    request_body=FeedbackSerializer,
+    responses={201: FeedbackSerializer,
+               400: 'Invalid data'})
 @api_view(['POST'])
 def create_feedback(request):
     try:

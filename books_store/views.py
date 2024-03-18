@@ -1,3 +1,4 @@
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -5,12 +6,24 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
-from rest_framework.permissions import IsAuthenticated
 
 from books_store.serializer import SignupSerializer
 
 
-@swagger_auto_schema(method='post', request_body=SignupSerializer)
+@swagger_auto_schema(
+    operation_description='Аутентификация/регистрация пользователя',
+    method='post',
+    request_body=SignupSerializer,
+    responses={
+        201: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'token': openapi.Schema(type=openapi.TYPE_STRING, description='Токен авторизации')
+            }
+        ),
+        400: 'Bad Request'
+    }
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):

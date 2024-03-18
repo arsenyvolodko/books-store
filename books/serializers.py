@@ -21,3 +21,13 @@ class BookSerializer(serializers.ModelSerializer):
 
     def get_categories(self, obj):
         return [category.name for category in obj.categories.all()]
+
+
+class CategoryAndBook(serializers.Serializer):
+    subcategory = CategorySerializer()
+    books = BookSerializer(many=True)
+
+
+class CategoriesAndBooks(serializers.Serializer):
+    books = BookSerializer(many=True)
+    subcategories = CategoryAndBook(many=True)
