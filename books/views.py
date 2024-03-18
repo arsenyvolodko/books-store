@@ -66,7 +66,7 @@ def get_books(request):
         openapi.Parameter('category', openapi.IN_QUERY,
                           description="Категория, книги которой возвращаются и все книги подкатегорий данной категории",
                           type=openapi.TYPE_STRING,
-                          required=False),
+                          required=True),
     ]
 )
 @api_view(['GET'])
