@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import pytz
 from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -6,6 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from books_store.settings import TIME_ZONE
 from .serializers import BookSerializer, CategoriesAndBooks
 from .models import Book, Category
 
@@ -19,15 +23,20 @@ def get_range_by_page(page_num: int):
 
 
 def get_books_util(**kwargs):
-    if category := kwargs.get('category'):
-        books = Book.objects.filter(bookcategory__category__name=category).all()
-    else:
-        books = Book.objects.all()
-
-    if range_ := kwargs.get('range_'):
+    range_ = kwargs.pop('range_', None)
+    # books = Book.objects.filter(**kwargs).all()
+    books = Book.objects.filter(**kwargs).all()
+    if range_:
         lb, rb = range_[0], range_[-1]
         books = books[lb: rb]
     return books
+
+
+def get_date(date_str: str):
+    try:
+        return datetime.strptime(date_str, '%Y-%m-%d').astimezone(tz=pytz.timezone(TIME_ZONE))
+    except ValueError:
+        return None
 
 
 @swagger_auto_schema(
@@ -35,6 +44,21 @@ def get_books_util(**kwargs):
     method='get',
     manual_parameters=[
         openapi.Parameter('category', openapi.IN_QUERY, description="Категория возвращаемых книг",
+                          type=openapi.TYPE_STRING,
+                          required=False),
+        openapi.Parameter('author', openapi.IN_QUERY, description="Автор книги",
+                          type=openapi.TYPE_STRING,
+                          required=False),
+        openapi.Parameter('status', openapi.IN_QUERY, description="Статус книги",
+                          type=openapi.TYPE_STRING,
+                          required=False),
+        openapi.Parameter('title', openapi.IN_QUERY, description="Название книги",
+                          type=openapi.TYPE_STRING,
+                          required=False),
+        openapi.Parameter('since', openapi.IN_QUERY, description="Дата публикации книги не ранее",
+                          type=openapi.TYPE_STRING,
+                          required=False),
+        openapi.Parameter('until', openapi.IN_QUERY, description="Дата публикации книги не позднее (формат: YYYY-MM-DD)",
                           type=openapi.TYPE_STRING,
                           required=False),
         openapi.Parameter('page', openapi.IN_QUERY, description="Номер страницы (на странице 50 записей)",
@@ -47,17 +71,26 @@ def get_books_util(**kwargs):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_books(request):
-    category = request.GET.get('category')
     page = request.GET.get('page', 1)
     try:
         page = int(page)
     except ValueError:
         return Response({'error': 'Invalid page number'}, status=status.HTTP_404_NOT_FOUND)
-
     data = {
         'range_': get_range_by_page(page),
-        'category': category
     }
+    if category := request.GET.get('category'):
+        data['bookcategory__category__name'] = category
+    if author := request.GET.get('author'):
+        data['bookauthor__author__name'] = author
+    if book_status := request.GET.get('status'):
+        data['status__exact'] = book_status
+    if title := request.GET.get('title'):
+        data['title__exact'] = title
+    if since := request.GET.get('since'):
+        data['published__gte'] = get_date(since)
+    if until := request.GET.get('until'):
+        data['published__lte'] = get_date(until)
     books = get_books_util(**data)
     serializer = BookSerializer(books, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
